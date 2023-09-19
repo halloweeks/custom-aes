@@ -1,0 +1,17 @@
+#include <stdio.h>
+#include "AES.h"
+
+int main(int argc, const char *argv[]) {
+	uint8_t key[16] = {
+		0xBB, 0x97, 0xFC, 0x1B, 0x5D, 0x5D, 0x82, 0x46,
+		0x19, 0x49, 0x52, 0x57, 0x52, 0x11, 0x77, 0xBD
+	};
+	
+	uint8_t data[32];
+	memset(data, 0x79, 32);
+	
+	EncryptData(data, 32, key);
+	
+	DecryptData(data, 32, key);
+	return 0;
+}
