@@ -2,16 +2,41 @@
 #include "AES.h"
 
 int main(int argc, const char *argv[]) {
+	// AES-128 KEY FOR ENCRYPT AND DECRYPT
 	uint8_t key[16] = {
-		0xBB, 0x97, 0xFC, 0x1B, 0x5D, 0x5D, 0x82, 0x46,
-		0x19, 0x49, 0x52, 0x57, 0x52, 0x11, 0x77, 0xBD
+		0xA9, 0x90, 0x7C, 0x88, 0x8F, 0xE1, 0x72, 0x33,
+		0x90, 0xF5, 0x78, 0xE9, 0x57, 0x90, 0xE3, 0x58
 	};
 	
-	uint8_t data[32];
-	memset(data, 0x79, 32);
+	// EXAMPLE DATA 64 BYTE MULTIPLE AES BLOCKS
+	uint8_t data[64] = "This is test aes-128-cbc encrypt and decrypt in c language.....";
 	
-	EncryptData(data, 32, key);
+	// PRINT ORIGINAL DATA
+	printf("ORIGINAL DATA: \n");
+	for (uint8_t index = 0; index < 64; index++) {
+		printf("%02X, ", data[index]);
+	}
+	printf("\n");
 	
-	DecryptData(data, 32, key);
+	// ENCRYPT DATA
+	EncryptData(data, 64, key);
+	
+	// PRINT ENCRYPTED DATA
+	printf("ENCRYPTED DATA: \n");
+	for (uint8_t index = 0; index < 64; index++) {
+		printf("%02X, ", data[index]);
+	}
+	printf("\n");
+	
+	// DECRYPT DATA
+	DecryptData(data, 64, key);
+	
+	// PRINT DECRYPTED DATA
+	printf("DECRYPTED DATA: \n");
+	for (uint8_t index = 0; index < 64; index++) {
+		printf("%02X, ", data[index]);
+	}
+	printf("\n");
+	
 	return 0;
 }

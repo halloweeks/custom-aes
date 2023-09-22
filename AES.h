@@ -704,6 +704,7 @@ static const uint32_t rcon[10] = {
 	0x1B000000, 0x36000000
 };
 
+// Generate round keys for encryption
 static inline void AesEncryptExpand(uint32_t *roundkey, const uint8_t *key) {
 	roundkey[0] = GETU32(key + 0);
 	roundkey[1] = GETU32(key + 4);
@@ -723,6 +724,7 @@ static inline void AesEncryptExpand(uint32_t *roundkey, const uint8_t *key) {
 	}
 }
 
+// Generate round keys for decryption
 static inline void AesDecryptExpand(uint32_t *roundkey, const uint8_t *key) {
 	AesEncryptExpand(roundkey, key);
 	
@@ -772,6 +774,7 @@ static inline void AesDecryptExpand(uint32_t *roundkey, const uint8_t *key) {
     }
 }
 
+// AES-128 ECB Encrypt
 static inline void AesEncrypt(const uint32_t *roundkey, const uint8_t plaintext[AES_BLOCK_SIZE], uint8_t ciphertext[AES_BLOCK_SIZE]) {
 	uint32_t s0, s1, s2, s3, t0, t1, t2, t3;
 	
@@ -860,6 +863,7 @@ static inline void AesEncrypt(const uint32_t *roundkey, const uint8_t plaintext[
 	PUTU32(ciphertext + 12, s3);
 }
 
+// AES-128 ECB Decrypt
 static inline void AesDecrypt(const uint32_t *roundkey, const uint8_t ciphertext[AES_BLOCK_SIZE], uint8_t plaintext[AES_BLOCK_SIZE]) {
 	uint32_t s0, s1, s2, s3, t0, t1, t2, t3;
 
@@ -960,7 +964,7 @@ static inline void AesDecrypt(const uint32_t *roundkey, const uint8_t ciphertext
 	PUTU32(plaintext + 12, s3);
 }
 
-// AES 128 CBC Encrypt iv from round key
+// AES-128 CBC Encrypt buffer 
 static inline void EncryptData(uint8_t *data, uint32_t size, const uint8_t *key) {
 	uint32_t roundkey[44];
 	uint8_t block[AES_BLOCK_SIZE];
@@ -974,7 +978,7 @@ static inline void EncryptData(uint8_t *data, uint32_t size, const uint8_t *key)
 	
 	for (uint32_t offset = 0; offset < size; offset += AES_BLOCK_SIZE) {
 		for (uint8_t index = 0; index < AES_BLOCK_SIZE; index++) {
-			data[offset + index] = data[offset + index] ^ block[index];
+			data[offset + index] ^= block[index];
 		}
 		
 		AesEncrypt(roundkey, data + offset, data + offset);
@@ -982,27 +986,30 @@ static inline void EncryptData(uint8_t *data, uint32_t size, const uint8_t *key)
 	}
 }
 
+// AES-128 CBC Decrypt buffer 
 static inline void DecryptData(uint8_t *data, uint32_t size, const uint8_t *key) {
-	uint32_t roundkey[44];
-	uint8_t block[AES_BLOCK_SIZE];
-	
-	AesDecryptExpand(roundkey, key);
-	
-	PUTU32(block, roundkey[0]);
+    uint32_t roundkey[44];
+    uint8_t block[AES_BLOCK_SIZE];
+    uint8_t prev_block[AES_BLOCK_SIZE];
+    
+    AesDecryptExpand(roundkey, key);
+    
+    PUTU32(block, roundkey[0]);
 	PUTU32(block + 4, roundkey[1]);
 	PUTU32(block + 8, roundkey[2]);
 	PUTU32(block + 12, roundkey[3]);
-	
-	for (uint32_t offset = 0; offset < size; offset += AES_BLOCK_SIZE) {
-		AesDecrypt(roundkey, data + offset, data + offset);
-		
-		for (uint8_t index = 0; index < AES_BLOCK_SIZE; index++) {
-			data[offset + index] = data[index] ^ block[index];
-		}
-		
-		memcpy(block, data + offset, AES_BLOCK_SIZE);
-	}
-	
+    
+    for (uint32_t offset = 0; offset < size; offset += AES_BLOCK_SIZE) {
+        memcpy(prev_block, data + offset, AES_BLOCK_SIZE); // Store a copy of the previous ciphertext block
+
+        AesDecrypt(roundkey, data + offset, data + offset); // Decrypt the block
+
+        for (uint8_t index = 0; index < AES_BLOCK_SIZE; index++) {
+            data[offset + index] ^= block[index]; // XOR with the previous ciphertext block
+        }
+
+        memcpy(block, prev_block, AES_BLOCK_SIZE); // Update the block for the next XOR operation
+    }
 }
 
 #endif
